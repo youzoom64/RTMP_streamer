@@ -314,3 +314,4 @@ class VoiceVoxStreamer:
     def __del__(self):
         """デストラクタでRTMPサーバーを確実に停止"""
         self.stop_rtmp_server()
+
