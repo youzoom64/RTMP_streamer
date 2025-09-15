@@ -45,7 +45,7 @@ class InteractiveStreamer(VoiceVoxStreamer):
         return result.returncode == 0
 
     def create_scenes_separately(self, script_data, prefix):
-        """シーンを個別に作成（変数競合を回避）"""
+        """シーンを個別に作成（親クラスのメソッドを使用）"""
         scenes = script_data.get("scenes", [])
         if not scenes:
             return []
@@ -59,7 +59,8 @@ class InteractiveStreamer(VoiceVoxStreamer):
             if not self.generate_voice(scene["text"], scene["speaker_id"], audio_file):
                 return []
             
-            if not self.create_simple_video(scene, audio_file, video_file):
+            # 親クラスのメソッドを使用
+            if not self.create_character_video(scene, audio_file, video_file):
                 return []
             
             created_scenes.append(video_file)
@@ -154,10 +155,34 @@ class InteractiveStreamer(VoiceVoxStreamer):
             self.rtmp_url
         ]
         
-        print(f"配信開始: {video_file}")
+        print(f"配信コマンド: {' '.join(cmd)}")
         
-        self.current_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # stderr を STDOUT に統合してリアルタイム表示
+        self.current_process = subprocess.Popen(
+            cmd, 
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            bufsize=1
+        )
         self.streaming = True
+        
+        # FFmpegの出力を別スレッドで監視
+        def monitor_ffmpeg():
+            try:
+                for line in self.current_process.stdout:
+                    print(f"FFmpeg: {line.strip()}")
+            except:
+                pass
+        
+        threading.Thread(target=monitor_ffmpeg, daemon=True).start()
+        
+        time.sleep(2)
+        if self.current_process.poll() is not None:
+            print("配信プロセスが即座に終了")
+            return False
+        
+        print("配信プロセス動作中")
         return True
 
     def stop_stream(self):

@@ -1,0 +1,2 @@
+2025/09/15 20:00:34 [emerg] 52092#55280: CreateFile() "C:\project_root\app_workspaces\RTMP_streamer/conf/nginx.conf" failed (3: The system cannot find the path specified)
+2025/09/15 20:02:35 [emerg] 38768#40008: unknown directive "rtmp" in C:\project_root\app_workspaces\RTMP_streamer/conf/nginx.conf:11

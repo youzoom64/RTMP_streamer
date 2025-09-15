@@ -1,0 +1,10 @@
+{
+  "title": "テスト配信",
+  "scenes": [
+    {
+      "text": "これはテストのセリフです。VOICEVOXの合成が成功すれば音声が再生されます。",
+      "display_text": "テストシーン",
+      "speaker_id": 1
+    }
+  ]
+}
