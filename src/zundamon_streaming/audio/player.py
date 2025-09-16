@@ -4,15 +4,22 @@ import time
 import pyaudio
 import wave
 import io
+import os
 
 class AudioPlayer:
     def __init__(self):
         self.audio = pyaudio.PyAudio()
         self.volume_callback = None
         self.mouth_callback = None  # 口パク制御用コールバック
-    
+        self.temp_dir = "temp/audio"
+        os.makedirs(self.temp_dir, exist_ok=True)
+        
     def play_audio_data(self, audio_data, stop_event):
         """音声データ再生 + リアルタイム口パク制御"""
+        
+        # 一時ファイル用ディレクトリ作成
+        temp_dir = "temp/audio"
+        os.makedirs(temp_dir, exist_ok=True)
         
         try:
             # WAVデータをメモリで解析
@@ -34,7 +41,7 @@ class AudioPlayer:
                     frames_per_buffer=1024
                 )
                 
-                print("pyaudioストリーム開始")
+                print("pyaudio 3ストリーム音声開始")
                 
                 # チャンクサイズ（0.1秒分）
                 chunk_frames = int(sample_rate * 0.1)
@@ -47,7 +54,6 @@ class AudioPlayer:
                         break
                     
                     chunk_count += 1
-                    print(f"チャンク{chunk_count}: {len(chunk)}bytes", end=" ")
                     
                     # 音声出力
                     stream.write(chunk)
@@ -61,15 +67,14 @@ class AudioPlayer:
                             
                             # 口パクしきい値: 1%
                             is_speaking = amplitude_percent > 1.0
-                            print(f"振幅:{amplitude_percent:.1f}% 口パク:{is_speaking}")
                             self.mouth_callback(is_speaking, amplitude_percent)
                 
                 stream.stop_stream()
                 stream.close()
-                print(f"\npyaudio再生完了: {chunk_count}チャンク処理")
+                print(f"pyaudio 3ストリーム音声完了: {chunk_count}チャンク処理")
                 
         except Exception as e:
-            print(f"pyaudio再生エラー: {e}")
+            print(f"pyaudio 3ストリーム音声エラー: {e}")
             import traceback
             traceback.print_exc()
     
