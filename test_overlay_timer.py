@@ -10,6 +10,7 @@ from streamer import VoiceVoxStreamer
 from PIL import Image
 from psd_tools import PSDImage
 import pygame
+import random
 
 class ZundamonLayeredRealtimeStreamer(VoiceVoxStreamer):
     def __init__(self, psd_path):
@@ -137,8 +138,26 @@ class ZundamonLayeredRealtimeStreamer(VoiceVoxStreamer):
                     audio_data = self.generate_voice_data(text, speaker_id=3)
                     if audio_data:
                         self.is_talking = True
+                        
+                        # 口パクアニメーション開始
+                        def mouth_animation():
+                            while pygame.mixer.music.get_busy() and self.is_talking:
+                                self.expression_state.set_mouth("ほあー")
+                                time.sleep(0.15)
+                                if self.is_talking:  # 途中で停止チェック
+                                    self.expression_state.set_mouth("むふ")
+                                    time.sleep(0.15)
+                        
+                        # 口パクを別スレッドで開始
+                        mouth_thread = threading.Thread(target=mouth_animation, daemon=True)
+                        mouth_thread.start()
+                        
+                        # 音声再生
                         self.play_audio_data(audio_data)
+                        
+                        # 音声終了後の処理
                         self.is_talking = False
+                        self.expression_state.set_mouth("むふ")
                     
                     self.speech_queue.task_done()
                     
@@ -152,13 +171,18 @@ class ZundamonLayeredRealtimeStreamer(VoiceVoxStreamer):
     def start_blink_worker(self):
         def blink_worker():
             while True:
-                if not self.is_talking:  # 話していない時のみまばたき
-                    self.is_blinking = True
-                    time.sleep(0.15)  # まばたき時間
-                    self.is_blinking = False
-                    time.sleep(2 + (time.time() % 3))  # 2-5秒間隔
+                if not self.is_talking:
+                    # 通常のまばたき
+                    original_eyes = self.expression_state.current_eyes
+                    self.expression_state.set_eyes("UU")
+                    time.sleep(0.12)  # まばたき時間
+                    self.expression_state.set_eyes(original_eyes)
+                    
+                    # 次のまばたきまでの間隔（2-5秒のランダム）
+                    time.sleep(2.0 + random.random() * 3.0)
                 else:
-                    time.sleep(0.1)
+                    # 話している間は短い間隔でまばたき
+                    time.sleep(0.5)
         
         threading.Thread(target=blink_worker, daemon=True).start()
 
